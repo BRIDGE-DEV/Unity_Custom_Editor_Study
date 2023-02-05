@@ -8,7 +8,7 @@ public class UserInputStore : MonoBehaviour
     private List<KeyCode> activeInputs;
     private FileDataHandler fileDataHandler;
 
-    private const string fileName = "KeyInfoList";
+    private const string fileName = "KeyInfoList.json";
     private void Awake()
     {
         DontDestroyOnLoad(this);
@@ -37,7 +37,7 @@ public class UserInputStore : MonoBehaviour
 
         if (activeInputs.Count > 0)
         {
-            for (int i = 0; i < activeInputs.Count; i++)
+            for (int i = activeInputs.Count - 1; i >= 0; i--)
             {
                 if (Input.GetKeyUp(activeInputs[i]))
                 {
