@@ -14,7 +14,7 @@ public class ReInput : EditorWindow
     [MenuItem("Window/ReInput")]
     public static void ShowWindow()
     {
-        ReInput reInput = GetWindow<ReInput>("Custom Pagage - ReInput");
+        ReInput reInput = GetWindow<ReInput>("Custom Package - ReInput");
         reInput.titleContent = new GUIContent("ReInput");
     }
 
@@ -43,52 +43,51 @@ public class ReInput : EditorWindow
         {
             keyInfoListElement.Add(CreateKeyInfoFoldout(keyInfo));
         }
+        
+        var foldOut = new Foldout();
+        foldOut.text = "Input Key List";
+        foldOut.value = false;
+        foldOut.contentContainer.Add(keyInfoListElement);
 
-        return keyInfoListElement;
+        return foldOut;
     }
 
     private Foldout CreateKeyInfoFoldout(KeyInfo keyInfo)
     {
-        var foldout = new Foldout();
-        foldout.text = keyInfo.key.ToString();
-        foldout.value = false;
-            
         var keyInfoElement = new VisualElement();
         keyInfoElement.name = "keyInfo-element";
-
-        // var keyCodeField = new TextField("Key");
-        // keyCodeField.value = keyInfo.key.ToString();
-        // keyInfoElement.Add(keyCodeField);
-        //
-        // var timeField = new FloatField("Time");
-        // timeField.value = keyInfo.time;
-        // keyInfoElement.Add(timeField);
-        //     
-        // var keyStatusField = new Toggle("KeyStatus");
-        // keyStatusField.value = keyInfo.keyStatus;
-        // keyInfoElement.Add(keyStatusField);
         
         var keyCodeField = new TextField("Key");
         keyCodeField.value = keyInfo.key.ToString();
         keyCodeField.RegisterValueChangedCallback(evt => {
-            keyInfo.key = (KeyCode)Enum.Parse(typeof(KeyCode), evt.newValue);
+            var targetKeyInfo = keyInfoList.keyInfos.Find(info => info.time.Equals(keyInfo.time));
+            targetKeyInfo.key = (KeyCode)Enum.Parse(typeof(KeyCode), evt.newValue);
         });
+
         keyInfoElement.Add(keyCodeField);
 
         var timeField = new FloatField("Time");
         timeField.value = keyInfo.time;
         timeField.RegisterValueChangedCallback(evt => {
-            keyInfo.time = evt.newValue;
+            var targetKeyInfo = keyInfoList.keyInfos.Find(info => info.time.Equals(keyInfo.time));
+            targetKeyInfo.time = evt.newValue;
         });
+
         keyInfoElement.Add(timeField);
 
         var keyStatusField = new Toggle("KeyStatus");
         keyStatusField.value = keyInfo.keyStatus;
         keyStatusField.RegisterValueChangedCallback(evt => {
-            keyInfo.keyStatus = evt.newValue;
+            var targetKeyInfo = keyInfoList.keyInfos.Find(info => info.time.Equals(keyInfo.time));
+            targetKeyInfo.keyStatus = evt.newValue;
         });
-        keyInfoElement.Add(keyStatusField);
 
+        keyInfoElement.Add(keyStatusField);
+        
+        var foldout = new Foldout();
+
+        foldout.text = keyInfo.key.ToString();
+        foldout.value = true;
         foldout.contentContainer.Add(keyInfoElement);
 
         return foldout;
