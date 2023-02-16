@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class InItTest : MonoBehaviour
@@ -8,4 +9,6 @@ public class InItTest : MonoBehaviour
     {
         Instantiate(userInputStor);
     }
+    
+    
 }
