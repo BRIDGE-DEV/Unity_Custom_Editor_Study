@@ -97,7 +97,14 @@ public class ReInput : EditorWindow
     {
         try
         {
+            keyInfoList.keyInfos.Sort(delegate(KeyInfo info1, KeyInfo info2)
+            {
+                return info1.time.CompareTo(info2.time);
+            });
+
             fileDataHandler.Save(keyInfoList);
+            
+            Debug.Log("[ReInput] Save Success!");
         }
         catch (Exception e)
         {
