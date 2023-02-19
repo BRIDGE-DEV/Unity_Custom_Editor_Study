@@ -105,6 +105,8 @@ public class ReInput : EditorWindow
             fileDataHandler.Save(keyInfoList);
             
             Debug.Log("[ReInput] Save Success!");
+            
+            EditorUtility.RequestScriptReload();
         }
         catch (Exception e)
         {
