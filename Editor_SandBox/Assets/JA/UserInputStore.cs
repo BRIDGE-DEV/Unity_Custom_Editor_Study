@@ -7,6 +7,7 @@ public class UserInputStore : MonoBehaviour
 
     private List<KeyCode> activeInputs;
     private FileDataHandler fileDataHandler;
+    private ConvertKeycode convertKeycode;
 
     private const string fileName = "KeyInfoList.json";
     private void Awake()
@@ -18,6 +19,8 @@ public class UserInputStore : MonoBehaviour
         
         activeInputs = new List<KeyCode>();
         fileDataHandler = new FileDataHandler(Application.persistentDataPath, fileName);
+
+        convertKeycode = new ConvertKeycode();
     }
 
     public void Update()
@@ -28,9 +31,12 @@ public class UserInputStore : MonoBehaviour
             {
                 if (Input.GetKeyDown(code))
                 {
-                    keyInfoList.keyInfos.Add(new KeyInfo(code, Time.time, true));
+                    if (convertKeycode.GetWindowKeyCoe(code) != 0)
+                    {
+                        keyInfoList.keyInfos.Add(new KeyInfo(code, Time.time, true));
                     
-                    activeInputs.Add(code);
+                        activeInputs.Add(code);
+                    }
                 }
             }
         }
