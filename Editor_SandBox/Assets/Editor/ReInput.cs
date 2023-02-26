@@ -11,6 +11,10 @@ public class ReInput : EditorWindow
     private KeyInfoList keyInfoList;
     private FileDataHandler fileDataHandler;
 
+    private static GameObject inputStore;
+    private GameObject outputStore;
+    public static bool IsAutoRecording { get; private set; }
+
     [MenuItem("Window/ReInput")]
     public static void ShowWindow()
     {
@@ -43,8 +47,16 @@ public class ReInput : EditorWindow
 
         autoRecordingToggle.RegisterValueChangedCallback(evt =>
         {
-            Debug.Log($"[KHW] {evt.newValue}");
+            Debug.Log($"[KHW] toggleValue : {evt.newValue}");
+
+            IsAutoRecording = evt.newValue;
         });
+        
+        var startReInputButton = rootVisualElement.Q<Button>("button-startReInput");
+        startRecordingButton.clicked += OnStartReInputButtonClicked;
+        
+        var stopReInputButton = rootVisualElement.Q<Button>("button-stopReInput");
+        stopRecordingButton.clicked += OnStopReInputButtonClicked;
     }
 
     private VisualElement CreateKeyInfoList()
@@ -53,34 +65,6 @@ public class ReInput : EditorWindow
         {
             name = "keyInfo-list"
         };
-
-        // // The "makeItem" function is called when the
-        // // ListView needs more items to render.
-        // Func<VisualElement> makeItem = () => new Label();
-        //
-        // // As the user scrolls through the list, the ListView object
-        // // recycles elements created by the "makeItem" function,
-        // // and invoke the "bindItem" callback to associate
-        // // the element with the matching data item (specified as an index in the list).
-        // Action<VisualElement, int> bindItem = (e, i) =>
-        // {
-        //     (e as Label).text = keyInfoList.keyInfos[i].key.ToString();
-        //     e.contentContainer.Add(CreateKeyInfoFoldout(keyInfoList.keyInfos[i]));
-        // };
-        //
-        // // Provide the list view with an explicit height for every row
-        // // so it can calculate how many items to actually display
-        // const int itemHeight = 16;
-        //
-        // var listView = new ListView(keyInfoList.keyInfos, itemHeight, makeItem, bindItem);
-        //
-        // listView.selectionType = SelectionType.Multiple;
-        // listView.reorderMode = ListViewReorderMode.Animated;
-        //
-        // listView.onItemsChosen += objects => Debug.Log(objects);
-        // listView.onSelectionChange += objects => Debug.Log(objects);
-        //
-        // listView.style.flexGrow = 1.0f;
 
         foreach (var keyInfo in keyInfoList.keyInfos)
         {
@@ -171,13 +155,53 @@ public class ReInput : EditorWindow
         }
     }
     
-    private void OnStartRecordingButtonClicked()
+    public static void OnStartRecordingButtonClicked()
     {
-        Debug.Log($"Start Recording Button");
+        Debug.Log($"[ReInput] Start Recording!");
+
+        var inputStorePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/JA/InputStore.prefab");
+        inputStore = Instantiate(inputStorePrefab);
     }
     
-    private void OnStopRecordingButtonClicked()
+    public static void OnStopRecordingButtonClicked()
     {
-        Debug.Log($"Stop Recording Button");
+        Debug.Log($"[ReInput] Stop Recording!");
+        
+        Destroy(inputStore);
+    }
+    
+    private void OnStartReInputButtonClicked()
+    {
+        Debug.Log($"[ReInput] Start ReInput!");
+
+        var outputStorePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/JA/OutputStore.prefab");
+        outputStore = Instantiate(outputStorePrefab);
+    }
+    
+    private void OnStopReInputButtonClicked()
+    {
+        Debug.Log($"[ReInput] Stop ReInput!");
+        
+        Destroy(outputStore);
+    }
+}
+
+[InitializeOnLoad]
+public static class PlayModeStateListener
+{
+    static PlayModeStateListener()
+    {
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+    }
+
+    private static void OnPlayModeStateChanged(PlayModeStateChange state)
+    {
+        if (state is PlayModeStateChange.EnteredPlayMode)
+        {
+            if (ReInput.IsAutoRecording)
+            {
+                ReInput.OnStartRecordingButtonClicked();
+            }
+        }
     }
 }
