@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "com.bridgedev.reinput": {
+      "version": "file:ReInputTool",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0"
+      }
+    },
     "com.unity.collab-proxy": {
       "version": "1.17.7",
       "depth": 0,
