@@ -4,29 +4,22 @@ using UnityEngine;
 
 public class Move : MonoBehaviour
 {
-    
-    // Update is called once per frame
-    void Update()
+    public float moveSpeed = 5f;
+    private Rigidbody rb;
+
+    private void Start()
     {
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            transform.Translate(0, 0.1f, 0);
-        }
-        else if (Input.GetKeyDown(KeyCode.B))
-        {
-            transform.Translate(-0.1f, 0, 0);
-        }
-        else if (Input.GetKeyDown(KeyCode.C))
-        {
-            transform.Translate(0, -0.1f, 0);
-        }
-        else if (Input.GetKeyDown(KeyCode.D))
-        {
-            transform.Translate(0.1f, 0, 0);
-        }
-        else if (Input.GetKeyDown(KeyCode.Space))
-        {
-            transform.Translate(0.1f, 0, 0);
-        }
+        rb = GetComponent<Rigidbody>();
+    }
+
+    private void FixedUpdate()
+    {
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+
+        Vector3 movement = new Vector3(horizontal, 0f, vertical);
+        movement.Normalize();
+
+        rb.velocity = movement * moveSpeed;
     }
 }
