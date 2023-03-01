@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
+using UnityEditor.PackageManager.UI;
 using UnityEditor.UIElements;
 
 public class ReInput : EditorWindow
@@ -31,8 +32,8 @@ public class ReInput : EditorWindow
     private void OnEnable()
     {
         fileDataHandler = new FileDataHandler(Application.persistentDataPath, KEYINFOLIST_FILE_NAME);
-
         keyInfoList = fileDataHandler.Load();
+
         rootVisualElement.Add(CreateKeyInfoList());
         
         // Import UXML
@@ -68,24 +69,39 @@ public class ReInput : EditorWindow
     {
         var keyInfoListElement = new VisualElement
         {
-            name = "keyInfo-list"
+            name = "keyInfo-list",
+            style =
+            {
+                width = StyleKeyword.Auto,
+                height = StyleKeyword.Auto
+            }
         };
 
         foreach (var keyInfo in keyInfoList.keyInfos)
         {
-            keyInfoListElement.Add(CreateKeyInfoFoldout(keyInfo));
+            keyInfoListElement.contentContainer.Add(CreateKeyInfoFoldout(keyInfo));
         }
         
-        var foldOut = new Foldout
+        // var foldOut = new Foldout
+        // {
+        //     text = "Input Key List",
+        //     value = false
+        // };
+        //
+        // foldOut.contentContainer.Add(keyInfoListElement);
+        
+        var scrollView = new ScrollView
         {
-            text = "Input Key List",
-            value = false
+            style =
+            {
+                width = StyleKeyword.Auto,
+                height = 1000
+            }
         };
 
-        foldOut.contentContainer.Add(keyInfoListElement);
-
-        // return listView;
-        return foldOut;
+        scrollView.contentContainer.Add(keyInfoListElement);
+        
+        return scrollView;
     }
 
     private VisualElement CreateKeyInfoFoldout(KeyInfo keyInfo)
@@ -134,7 +150,7 @@ public class ReInput : EditorWindow
         var foldout = new Foldout
         {
             text = keyInfo.key.ToString(),
-            value = false
+            value = true
         };
 
         foldout.contentContainer.Add(keyInfoElement);
@@ -231,12 +247,19 @@ public static class PlayModeStateListener
 
     private static void OnPlayModeStateChanged(PlayModeStateChange state)
     {
-        if (state is PlayModeStateChange.EnteredPlayMode)
+        switch (state)
         {
-            if (ReInput.IsAutoRecording)
-            {
-                ReInput.OnStartRecordingButtonClicked();
-            }
+            case PlayModeStateChange.EnteredPlayMode:
+                if (ReInput.IsAutoRecording)
+                {
+                    ReInput.OnStartRecordingButtonClicked();
+                }
+
+                break; 
+            case PlayModeStateChange.ExitingPlayMode:
+                EditorUtility.RequestScriptReload();
+
+                break;
         }
     }
 }
