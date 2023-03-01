@@ -6,14 +6,20 @@ using UnityEditor.UIElements;
 
 public class ReInput : EditorWindow
 {
-    private const string fileName = "KeyInfoList.json";
+    private const string KEYINFOLIST_FILE_NAME = "KeyInfoList.json";
+    private const string PLAYER_PREFS_KEY_AUTO_RECORDING = "REINPUT_AUTO_RECORDING";
 
     private KeyInfoList keyInfoList;
     private FileDataHandler fileDataHandler;
 
     private static GameObject inputStore;
     private GameObject outputStore;
-    public static bool IsAutoRecording { get; private set; }
+
+    public static bool IsAutoRecording
+    {
+        get => PlayerPrefs.GetInt(PLAYER_PREFS_KEY_AUTO_RECORDING, 0) != 0;
+        private set => PlayerPrefs.SetInt(PLAYER_PREFS_KEY_AUTO_RECORDING, value ? 1 : 0);
+    }
 
     [MenuItem("Window/ReInput")]
     public static void ShowWindow()
@@ -24,7 +30,7 @@ public class ReInput : EditorWindow
 
     private void OnEnable()
     {
-        fileDataHandler = new FileDataHandler(Application.persistentDataPath, fileName);
+        fileDataHandler = new FileDataHandler(Application.persistentDataPath, KEYINFOLIST_FILE_NAME);
 
         keyInfoList = fileDataHandler.Load();
         rootVisualElement.Add(CreateKeyInfoList());
@@ -44,19 +50,18 @@ public class ReInput : EditorWindow
         stopRecordingButton.clicked += OnStopRecordingButtonClicked;
 
         var autoRecordingToggle = rootVisualElement.Q<Toggle>("toggle-autoRecoding");
+        autoRecordingToggle.value = IsAutoRecording;
 
         autoRecordingToggle.RegisterValueChangedCallback(evt =>
         {
-            Debug.Log($"[KHW] toggleValue : {evt.newValue}");
-
             IsAutoRecording = evt.newValue;
         });
         
         var startReInputButton = rootVisualElement.Q<Button>("button-startReInput");
-        startRecordingButton.clicked += OnStartReInputButtonClicked;
+        startReInputButton.clicked += OnStartReInputButtonClicked;
         
         var stopReInputButton = rootVisualElement.Q<Button>("button-stopReInput");
-        stopRecordingButton.clicked += OnStopReInputButtonClicked;
+        stopReInputButton.clicked += OnStopReInputButtonClicked;
     }
 
     private VisualElement CreateKeyInfoList()
@@ -159,20 +164,42 @@ public class ReInput : EditorWindow
     {
         Debug.Log($"[ReInput] Start Recording!");
 
+        if (inputStore != null)
+        {
+            Debug.LogError($"[ReInput] It's already playing input now!");
+            return;
+        }
+
         var inputStorePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/JA/InputStore.prefab");
         inputStore = Instantiate(inputStorePrefab);
     }
     
-    public static void OnStopRecordingButtonClicked()
+    private static void OnStopRecordingButtonClicked()
     {
         Debug.Log($"[ReInput] Stop Recording!");
-        
-        Destroy(inputStore);
+
+        if (inputStore != null)
+        {
+            Destroy(inputStore);
+            inputStore = null;
+        }
+        else
+        {
+            Debug.LogError($"[ReInput] There's no input system now.");
+        }
     }
     
     private void OnStartReInputButtonClicked()
     {
         Debug.Log($"[ReInput] Start ReInput!");
+
+        if (outputStore != null)
+        {
+            Debug.LogError($"[ReInput] It's already playing output now!");
+            return;
+        }
+        
+        EditorApplication.EnterPlaymode();
 
         var outputStorePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/JA/OutputStore.prefab");
         outputStore = Instantiate(outputStorePrefab);
@@ -181,8 +208,16 @@ public class ReInput : EditorWindow
     private void OnStopReInputButtonClicked()
     {
         Debug.Log($"[ReInput] Stop ReInput!");
-        
-        Destroy(outputStore);
+
+        if (outputStore != null)
+        {
+            Destroy(outputStore);
+            outputStore = null;
+        }
+        else
+        {
+            Debug.LogError($"[ReInput] There's no output system now.");
+        }
     }
 }
 
