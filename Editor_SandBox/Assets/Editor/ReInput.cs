@@ -6,10 +6,16 @@ using UnityEditor.UIElements;
 
 public class ReInput : EditorWindow
 {
+#region Const
     private const string KEYINFOLIST_FILE_NAME = "KeyInfoList.json";
     private const string PLAYER_PREFS_KEY_AUTO_RECORDING = "REINPUT_AUTO_RECORDING";
     private const string PLAYER_PREFS_KEY_REINPUT = "REINPUT_REINPUT";
-    
+#endregion
+
+#region File Manage
+    private KeyInfoList keyInfoList;
+    private FileDataHandler fileDataHandler;
+
     private static string assetPath;
 
     private static string AssetPath
@@ -19,10 +25,9 @@ public class ReInput : EditorWindow
             return assetPath ??= AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets($"t:Script {nameof(ReInput)}")[0]).Split("/Editor/ReInput")[0];
         }
     }
+#endregion
 
-    private KeyInfoList keyInfoList;
-    private FileDataHandler fileDataHandler;
-
+#region Key Input Manage
     private static GameObject inputStore;
     private GameObject outputStore;
 
@@ -37,7 +42,9 @@ public class ReInput : EditorWindow
         get => PlayerPrefs.GetInt(PLAYER_PREFS_KEY_REINPUT, 0) != 0;
         set => PlayerPrefs.SetInt(PLAYER_PREFS_KEY_REINPUT, value ? 1 : 0);
     }
+#endregion
 
+#region Initialization
     [MenuItem("Window/ReInput")]
     public static void ShowWindow()
     {
@@ -68,7 +75,8 @@ public class ReInput : EditorWindow
             style =
             {
                 width = StyleKeyword.Auto,
-                height = StyleKeyword.Auto
+                height = StyleKeyword.Auto,
+                backgroundColor = Color.black
             }
         };
 
@@ -82,7 +90,7 @@ public class ReInput : EditorWindow
             style =
             {
                 width = StyleKeyword.Auto,
-                height = 1000
+                height = Length.Percent(85)
             }
         };
 
@@ -144,7 +152,9 @@ public class ReInput : EditorWindow
 
         return foldout;
     }
+#endregion
 
+#region UI Event Binding
     private void BindingUXMLElements()
     {
         var saveButton = rootVisualElement.Q<Button>("button-saveData");
@@ -317,32 +327,5 @@ public class ReInput : EditorWindow
         Destroy(outputStore);
         outputStore = null;
     }
-}
-
-[InitializeOnLoad]
-public static class PlayModeStateListener
-{
-    static PlayModeStateListener()
-    {
-        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-    }
-
-    private static void OnPlayModeStateChanged(PlayModeStateChange state)
-    {
-        switch (state)
-        {
-            case PlayModeStateChange.EnteredPlayMode:
-                if (ReInput.IsAutoRecording && !ReInput.IsReInputing)
-                {
-                    ReInput.OnStartRecordingButtonClicked();
-                }
-
-                break; 
-            case PlayModeStateChange.ExitingPlayMode:
-                ReInput.IsReInputing = false;
-                EditorUtility.RequestScriptReload();
-
-                break;
-        }
-    }
+#endregion
 }
