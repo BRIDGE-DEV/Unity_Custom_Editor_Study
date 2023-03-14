@@ -20,17 +20,24 @@ public class UserOutputStore : MonoBehaviour
     void Start()
     {
         _convertKeycode = new ConvertKeycode();
-        
+
+
         // 읽어오기
         _fileDataHandler = new FileDataHandler(Application.persistentDataPath, FileName);
         _keyInfoList = _fileDataHandler.Load();
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        
     }
 
     void Update()
     {
-        
         Vector3 mousePosition = Input.mousePosition;
         Vector3 screenPoint = Camera.main.WorldToScreenPoint(transform.position);
+        
+        Cursor.lockState = CursorLockMode.Locked;
+        
         bool isMouseOver = mousePosition.x > 0 && mousePosition.x < Screen.width && mousePosition.y > 0 && mousePosition.y < Screen.height;
         if (isMouseOver && !isMouseOverGame)
         {
@@ -63,6 +70,11 @@ public class UserOutputStore : MonoBehaviour
                     _keyInfoList.keyInfos.RemoveAt(i);
                 }
             }
+        }
+
+        if (_keyInfoList.keyInfos.Count == 0)
+        {
+            Cursor.lockState = CursorLockMode.None;
         }
     }
 }

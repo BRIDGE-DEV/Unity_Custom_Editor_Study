@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEngine;
 
 [InitializeOnLoad]
 public static class PlayModeStateListener
@@ -21,6 +22,8 @@ public static class PlayModeStateListener
                 {
                     ReInput.OnStartReInputButtonClicked();
                 }
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
                 break; 
             case PlayModeStateChange.ExitingPlayMode:
                 EditorUtility.RequestScriptReload();
@@ -33,6 +36,8 @@ public static class PlayModeStateListener
                 {
                     ReInput.OnStopReInputButtonClicked();
                 }
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
 
                 ReInput.IsRecording = false;
                 ReInput.IsReInputing = false;
