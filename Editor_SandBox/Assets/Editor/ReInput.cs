@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
@@ -8,8 +9,8 @@ public class ReInput : EditorWindow
 {
 #region Const
     private const string KEYINFOLIST_FILE_NAME = "KeyInfoList.json";
-    private const string PLAYER_PREFS_KEY_AUTO_RECORDING = "REINPUT_AUTO_RECORDING";
-    private const string PLAYER_PREFS_KEY_REINPUT = "REINPUT_REINPUT";
+    private const string PLAYER_PREFS_KEY_IS_RECORDING = "REINPUT_RECORDING";
+    private const string PLAYER_PREFS_KEY_IS_REINPUT = "REINPUT_REINPUT";
 #endregion
 
 #region File Manage
@@ -29,18 +30,21 @@ public class ReInput : EditorWindow
 
 #region Key Input Manage
     private static GameObject inputStore;
-    private GameObject outputStore;
+    private static GameObject outputStore;
+    
+    private static RadioButtonGroup recordingButtonGroup;
+    private static RadioButtonGroup reInputButtonGroup;
 
-    public static bool IsAutoRecording
+    public static bool IsRecording
     {
-        get => PlayerPrefs.GetInt(PLAYER_PREFS_KEY_AUTO_RECORDING, 0) != 0;
-        private set => PlayerPrefs.SetInt(PLAYER_PREFS_KEY_AUTO_RECORDING, value ? 1 : 0);
+        get => PlayerPrefs.GetInt(PLAYER_PREFS_KEY_IS_RECORDING, 0) == 1;
+        set => PlayerPrefs.SetInt(PLAYER_PREFS_KEY_IS_RECORDING, value ? 1 : 0);
     }
 
     public static bool IsReInputing
     {
-        get => PlayerPrefs.GetInt(PLAYER_PREFS_KEY_REINPUT, 0) != 0;
-        set => PlayerPrefs.SetInt(PLAYER_PREFS_KEY_REINPUT, value ? 1 : 0);
+        get => PlayerPrefs.GetInt(PLAYER_PREFS_KEY_IS_REINPUT, 0) == 1;
+        set => PlayerPrefs.SetInt(PLAYER_PREFS_KEY_IS_REINPUT, value ? 1 : 0);
     }
 #endregion
 
@@ -48,6 +52,9 @@ public class ReInput : EditorWindow
     [MenuItem("Window/ReInput")]
     public static void ShowWindow()
     {
+        IsRecording = false;
+        IsReInputing = false;
+
         var reInput = GetWindow<ReInput>("Custom Package - ReInput");
         reInput.titleContent = new GUIContent("ReInput");
     }
@@ -62,6 +69,7 @@ public class ReInput : EditorWindow
         // Import UXML
         var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"{AssetPath}/Editor/ReInput.uxml");
         VisualElement labelFromUXML = visualTree.Instantiate();
+
         rootVisualElement.Add(labelFromUXML);
         
         BindingUXMLElements();
@@ -90,7 +98,7 @@ public class ReInput : EditorWindow
             style =
             {
                 width = StyleKeyword.Auto,
-                height = Length.Percent(85)
+                height = Length.Percent(90)
             }
         };
 
@@ -162,65 +170,73 @@ public class ReInput : EditorWindow
         
         var resetButton = rootVisualElement.Q<Button>("button-resetData");
         resetButton.clicked += OnResetButtonClicked;
+
+        recordingButtonGroup = rootVisualElement.Q<RadioButtonGroup>("radiobuttongroup-recording");
         
-        var startRecordingRadioButton = rootVisualElement.Q<RadioButton>("radiobutton-startRecording");
+        recordingButtonGroup.choices = new List<string> { "Start", "Stop" };
+        recordingButtonGroup.value = 1;
         
-        startRecordingRadioButton.RegisterCallback<ChangeEvent<bool>>((evt) =>
+        recordingButtonGroup.RegisterValueChangedCallback(evt =>
         {
-            if (!evt.newValue)
+            if (IsReInputing)
             {
+                Debug.LogError($"[ReInput] It's already reInputing now!");
+                recordingButtonGroup.value = evt.previousValue;
                 return;
             }
 
-            startRecordingRadioButton.value = OnStartRecordingButtonClicked();
-        });
-        
-        var stopRecordingRadioButton = rootVisualElement.Q<RadioButton>("radiobutton-stopRecording");
-        
-        stopRecordingRadioButton.RegisterCallback<ChangeEvent<bool>>(evt =>
-        {
-            stopRecordingRadioButton.value = evt.newValue;
+            IsRecording = evt.newValue == 0;
 
-            if (evt.newValue)
+            if (IsRecording)
             {
-                OnStopRecordingButtonClicked();                
+                if (EditorApplication.isPlaying)
+                {
+                    OnStartRecordingButtonClicked();
+                }
+                else
+                {
+                    EditorApplication.EnterPlaymode();                    
+                }
+            }
+            else
+            {
+                EditorApplication.ExitPlaymode();
+                OnStopRecordingButtonClicked();
             }
         });
-
-        var autoRecordingToggle = rootVisualElement.Q<Toggle>("toggle-autoRecording");
-        autoRecordingToggle.value = IsAutoRecording;
-
-        autoRecordingToggle.RegisterValueChangedCallback(evt =>
-        {
-            IsAutoRecording = evt.newValue;
-        });
         
-        var startReInputRadioButton = rootVisualElement.Q<RadioButton>("radiobutton-startReInput");
+        reInputButtonGroup = rootVisualElement.Q<RadioButtonGroup>("radiobuttongroup-reInput");
         
-        startReInputRadioButton.RegisterCallback<ChangeEvent<bool>>(evt =>
+        reInputButtonGroup.choices = new List<string> { "Start", "Stop" };
+        reInputButtonGroup.value = 1;
+        
+        reInputButtonGroup.RegisterValueChangedCallback(evt =>
         {
-            if (!evt.newValue)
+            if (IsRecording)
             {
+                Debug.LogError($"[ReInput] It's already recording now!");
+                reInputButtonGroup.value = evt.previousValue;
                 return;
             }
+            
+            IsReInputing = evt.newValue == 0;
 
-            IsReInputing = true;
-            startReInputRadioButton.value = OnStartReInputButtonClicked();
-        });
-        
-        var stopReInputRadioButton = rootVisualElement.Q<RadioButton>("radiobutton-stopReInput");
-        
-        stopReInputRadioButton.RegisterCallback<ChangeEvent<bool>>(evt =>
-        {
-            stopReInputRadioButton.value = evt.newValue;
-
-            if (!evt.newValue)
+            if (IsReInputing)
             {
-                return;
+                if (EditorApplication.isPlaying)
+                {
+                    OnStartReInputButtonClicked();
+                }
+                else
+                {
+                    EditorApplication.EnterPlaymode();                    
+                }
             }
-
-            IsReInputing = false;
-            OnStopReInputButtonClicked();
+            else
+            {
+                EditorApplication.ExitPlaymode();
+                OnStopReInputButtonClicked();
+            }
         });
     }
 
@@ -229,7 +245,6 @@ public class ReInput : EditorWindow
         try
         {
             keyInfoList.keyInfos.Sort((info1, info2) => info1.time.CompareTo(info2.time));
-
             fileDataHandler.Save(keyInfoList);
             
             Debug.Log("[ReInput] Save Success!");
@@ -247,7 +262,6 @@ public class ReInput : EditorWindow
         try
         {
             keyInfoList.keyInfos.Clear();
-
             fileDataHandler.Save(keyInfoList);
             
             Debug.Log("[ReInput] Reset Success!");
@@ -259,30 +273,25 @@ public class ReInput : EditorWindow
             Debug.LogError(e.Message);
         }
     }
-    
-    public static bool OnStartRecordingButtonClicked()
-    {
-        if (!EditorApplication.isPlaying)
-        {
-            Debug.LogError($"[ReInput] You can only used this button when you playing in editor.");
-            return false;
-        }
 
-        if (inputStore != null)
+    public static void OnStartRecordingButtonClicked()
+    {
+        if (inputStore != null || outputStore != null)
         {
-            Debug.LogError($"[ReInput] It's already playing input now!");
-            return false;
+            return;
         }
         
         Debug.Log($"[ReInput] Start Recording!");
 
         var inputStorePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{AssetPath}/Runtime/InputStore.prefab");
         inputStore = Instantiate(inputStorePrefab);
+        
+        recordingButtonGroup.value = 0;
 
-        return true;
+        reInputButtonGroup.SetEnabled(false);
     }
     
-    private static void OnStopRecordingButtonClicked()
+    public static void OnStopRecordingButtonClicked()
     {
         if (inputStore == null)
         {
@@ -294,27 +303,30 @@ public class ReInput : EditorWindow
 
         Destroy(inputStore);
         inputStore = null;
+
+        recordingButtonGroup.value = 1;
+
+        reInputButtonGroup.SetEnabled(true);
     }
     
-    private bool OnStartReInputButtonClicked()
+    public static void OnStartReInputButtonClicked()
     {
-        if (outputStore != null)
+        if (inputStore != null || outputStore != null)
         {
-            Debug.LogError($"[ReInput] It's already playing output now!");
-            return false;
+            return;
         }
         
         Debug.Log($"[ReInput] Start ReInput!");
-        
-        EditorApplication.EnterPlaymode();
 
         var outputStorePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{AssetPath}/Runtime/OutputStore.prefab");
         outputStore = Instantiate(outputStorePrefab);
+        
+        reInputButtonGroup.value = 0;
 
-        return true;
+        recordingButtonGroup.SetEnabled(false);
     }
     
-    private void OnStopReInputButtonClicked()
+    public static void OnStopReInputButtonClicked()
     {
         if (outputStore == null)
         {
@@ -326,6 +338,10 @@ public class ReInput : EditorWindow
 
         Destroy(outputStore);
         outputStore = null;
+        
+        reInputButtonGroup.value = 1;
+
+        recordingButtonGroup.SetEnabled(true);
     }
 #endregion
 }

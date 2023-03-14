@@ -13,16 +13,29 @@ public static class PlayModeStateListener
         switch (state)
         {
             case PlayModeStateChange.EnteredPlayMode:
-                if (ReInput.IsAutoRecording && !ReInput.IsReInputing)
+                if (ReInput.IsRecording)
                 {
                     ReInput.OnStartRecordingButtonClicked();
                 }
-
+                else if (ReInput.IsReInputing)
+                {
+                    ReInput.OnStartReInputButtonClicked();
+                }
                 break; 
             case PlayModeStateChange.ExitingPlayMode:
-                ReInput.IsReInputing = false;
                 EditorUtility.RequestScriptReload();
 
+                if (ReInput.IsRecording)
+                {
+                    ReInput.OnStopRecordingButtonClicked();
+                }
+                else if (ReInput.IsReInputing)
+                {
+                    ReInput.OnStopReInputButtonClicked();
+                }
+
+                ReInput.IsRecording = false;
+                ReInput.IsReInputing = false;
                 break;
         }
     }
