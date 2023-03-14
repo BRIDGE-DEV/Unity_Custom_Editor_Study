@@ -31,6 +31,9 @@ public class ReInput : EditorWindow
 #region Key Input Manage
     private static GameObject inputStore;
     private static GameObject outputStore;
+
+    private static Button saveButton;
+    private static Button resetButton;
     
     private static RadioButtonGroup recordingButtonGroup;
     private static RadioButtonGroup reInputButtonGroup;
@@ -165,10 +168,10 @@ public class ReInput : EditorWindow
 #region UI Event Binding
     private void BindingUXMLElements()
     {
-        var saveButton = rootVisualElement.Q<Button>("button-saveData");
+        saveButton = rootVisualElement.Q<Button>("button-saveData");
         saveButton.clicked += OnSaveButtonClicked;
         
-        var resetButton = rootVisualElement.Q<Button>("button-resetData");
+        resetButton = rootVisualElement.Q<Button>("button-resetData");
         resetButton.clicked += OnResetButtonClicked;
 
         recordingButtonGroup = rootVisualElement.Q<RadioButtonGroup>("radiobuttongroup-recording");
@@ -289,13 +292,13 @@ public class ReInput : EditorWindow
         recordingButtonGroup.value = 0;
 
         reInputButtonGroup.SetEnabled(false);
+        SetEnabledElementButtons(false);
     }
     
     public static void OnStopRecordingButtonClicked()
     {
         if (inputStore == null)
         {
-            Debug.LogError($"[ReInput] There's no input system now.");
             return;
         }
         
@@ -307,6 +310,7 @@ public class ReInput : EditorWindow
         recordingButtonGroup.value = 1;
 
         reInputButtonGroup.SetEnabled(true);
+        SetEnabledElementButtons(true);
     }
     
     public static void OnStartReInputButtonClicked()
@@ -324,13 +328,13 @@ public class ReInput : EditorWindow
         reInputButtonGroup.value = 0;
 
         recordingButtonGroup.SetEnabled(false);
+        SetEnabledElementButtons(false);
     }
     
     public static void OnStopReInputButtonClicked()
     {
         if (outputStore == null)
         {
-            Debug.LogError($"[ReInput] There's no output system now.");
             return;
         }
 
@@ -342,6 +346,13 @@ public class ReInput : EditorWindow
         reInputButtonGroup.value = 1;
 
         recordingButtonGroup.SetEnabled(true);
+        SetEnabledElementButtons(true);
+    }
+
+    private static void SetEnabledElementButtons(bool isActive)
+    {
+        saveButton.SetEnabled(isActive);
+        resetButton.SetEnabled(isActive);
     }
 #endregion
 }
